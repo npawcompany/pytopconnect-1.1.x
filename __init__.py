@@ -129,7 +129,7 @@ class QueryRead:
 		if len(value) >0:
 			self.LENGTH += len(value)
 			data = DataFrame(list(map(lambda x: dict(zip(add(cols,cqr),add(x,vqr))),value)))
-			p1.close()
+			if self.prog: p1.close()
 			return data
 		cols, val = list(cols), [NoneValue()] * len(cols)
 		cols.extend(['_query_', '_upgraded_', '_connection_'])

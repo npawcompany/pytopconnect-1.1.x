@@ -21,12 +21,16 @@ class queryPY(pymysql.connections.Connection):
 			raise e
 	def __str__(self):
 		return f'''{self.res}'''
+	def close_cur(self):
+		if hasattr(self,'cur'):
+			self.cur.close()
+			delattr(self,'cur')
 	def open(self):
-		if hasattr(self,'cur'): self.cur.close()
+		self.close_cur()
 		self.__init__(self.DATA_CONNECT,self.paramets)
 	def is_active(self):
 		try:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 			with self.cursor() as cursor:
 				cursor.execute('SELECT 1')
 				cursor.close()
@@ -47,7 +51,7 @@ class queryPY(pymysql.connections.Connection):
 		except BaseException as e:
 			raise e
 		finally:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 		return self.res
 	def functinon_list(self,m):
 		MET_FUNC = {

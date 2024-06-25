@@ -118,6 +118,8 @@ class DataBase:
 				for key, val in table.__dict__.items():
 					table.__dict__[f'{prefix}_{key}'] = val
 					del table.__dict__[key]
+			if '__TC_DATANAME__' in table.__dict__.keys():
+				del table.__dict__['__TC_DATANAME__']
 			if not isinstance(r,dict):
 				raise QueryException("'_tc_options_' must be a dictionary")
 			if self.is_table(name_table):
@@ -131,13 +133,14 @@ class DataBase:
 				raise QueryException(f"'_tc_values_' must be a method or dictionary")
 			values = values() if isinstance(values,types.MethodType) else values
 			if isinstance(values,dict):
-				if not self._query_('INSERT',{name_table:{
-					'columns':values.keys(),
-					'values':map(lambda x: [str(i) if isinstance(i,(int,tuple)) else f" '{i}'  " for i in x],zip(*values.values()))
-				}}):
-					return
+				if len(values)>0:
+					if not self._query_('INSERT',{name_table:{
+						'columns':values.keys(),
+						'values':map(lambda x: [str(i) if isinstance(i,(int,tuple)) else f" '{i}'  " for i in x],zip(*values.values()))
+					}}):
+						return
 			ns = [len(v) for v in values.values()]
-			n = int(sum(ns)/len(ns))
+			n = int(sum(ns)/max(len(ns),1))
 			if not all([n==i for i in ns]):
 				raise QueryException(f"Number of values do not match")
 			self[name_table] = [{
@@ -201,14 +204,17 @@ class Tables(Series, DataBase):
 			else:
 				setattr(self,key,val)
 
+	def is_active(self) -> bool:
+		return self._connection_().is_active()
+
 	def open(self) -> bool:
-		if self._connection_().is_active():
+		if self.is_active():
 			return False
 		self._connection_().open()
 		return True
 
 	def close(self) -> bool:
-		if not self._connection_().is_active():
+		if not self.is_active():
 			return False
 		self._connection_().close()
 		return True
@@ -349,7 +355,7 @@ class Items(DataFrame):
 				return getattr(self,'ALL_COLUMNS',[])
 		if not isinstance(columns, tuple):
 			raise QueryException("Columns must be of the following data types: 'tuple' and must contain a string")
-		columns = filter(self.is_column,columns)
+		columns = tuple(filter(self.is_column,columns))
 		return DataFrame(dict(zip(columns,map(self.get_column,columns))))
 
 	def get_count_columns(self) -> int:
@@ -394,6 +400,7 @@ class Items(DataFrame):
 		return FIELDS.get(column, FIELDS)
 
 	def added(self,values:list,columns:list) -> list:
+		n = -1
 		for i in range(len(values)):
 			if len(values[i])!=len(columns):
 				raise QueryException(f"Column and value lengths are not equal")
@@ -404,7 +411,10 @@ class Items(DataFrame):
 				if k not in value.keys():
 					if v.get('is_primary'):
 						val = v.get('values',[])
-						value[k] = val.max()+1 if len(val)>0 else 1
+						if n == -1:
+							n = val.max() if len(val)>0 else 1
+						n += 1
+						value[k] = n
 					else:
 						value[k] = v.get('default')
 			values[i] = value
@@ -591,6 +601,8 @@ class Items(DataFrame):
 class Column(Series):
 
 	def __init__(self,table:str,key:str,values:list,*args,**kwargs):
+		def is_noneValue(value):
+			return isinstance(value,NoneValue)
 		super(Column, self).__init__(values)
 		self._name = key
 		self.table = table
@@ -603,6 +615,10 @@ class Column(Series):
 		self.type = lambda : self.parent.types(self.key).get('type', None)
 		self.required = lambda : self.parent.types(self.key).get('required', False)
 		self.is_primary = lambda : self.parent.types(self.key).get('is_primary', False)
+		mask = self.apply(is_noneValue)
+		indexs = mask[mask].index
+		if len(indexs)>0:
+			self.drop(indexs, inplace=True)
 
 	def constructor(self,data):
 		return Column(self.table,self.key,data,parent=self.parent)

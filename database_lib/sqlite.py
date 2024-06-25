@@ -21,15 +21,19 @@ class queryPY(sqlite3.Connection):
 			raise e
 	def __str__(self):
 		return f'''{self.res}'''
+	def close_cur(self):
+		if hasattr(self,'cur'):
+			self.cur.close()
+			delattr(self,'cur')
 	def open(self):
-		if hasattr(self,'cur'): self.cur.close()
+		self.close_cur()
 		self.__init__(self.DATA_CONNECT,self.paramets)
 	def is_active(self):
 		try:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 			self.cur = self.cursor()
 			self.cur.execute('SELECT 1')
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 			return True
 		except sqlite3.Error:
 			return False
@@ -38,14 +42,10 @@ class queryPY(sqlite3.Connection):
 			self.cur = self.cursor()
 			self.res = self.functinon_list(method)(que,req)
 			if self.paramets.get('auto_commit',False): self.commit()
-		except sqlite3.Error:
-			self.paramets['attempts'] += 1
-			self.open()
-			return self.query_f(method,que,req)
 		except BaseException as e:
 			raise e
 		finally:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 		return self.res
 	def functinon_list(self,m):
 		MET_FUNC = {

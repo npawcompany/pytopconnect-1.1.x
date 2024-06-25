@@ -22,15 +22,19 @@ class queryPY(psycopg2.extensions.connection):
 			raise e
 	def __str__(self):
 		return f'''{self.res}'''
+	def close_cur(self):
+		if hasattr(self,'cur'):
+			self.cur.close()
+			delattr(self,'cur')
 	def open(self):
-		if hasattr(self,'cur'): self.cur.close()
+		self.close_cur()
 		self.__init__(self.DATA_CONNECT)
 	def is_active(self):
 		try:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 			self.cur = self.cursor()
 			self.cur.execute('SELECT 1')
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 			return True
 		except psycopg2.Error:
 			return False
@@ -48,7 +52,7 @@ class queryPY(psycopg2.extensions.connection):
 		except BaseException as e:
 			raise e
 		finally:
-			if hasattr(self,'cur'): self.cur.close()
+			self.close_cur()
 		return self.res
 	def functinon_list(self,m):
 		MET_FUNC = {
