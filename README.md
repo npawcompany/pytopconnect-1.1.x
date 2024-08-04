@@ -53,7 +53,7 @@ from pytopconnect.condition import Condition, Where, OrderBy
 
 cond = Condition(MySQL_DB.database.table)
 where = {
-	"age":lambda col, **kwargs: Where(col, f"{col} > 15"),
+	"age":lambda col, **kwargs: Where(col, f"{col.column} > 15"),
 	"name":lambda col, **kwargs: Where(col, f"{col.length(**kwargs)} > 5")
 }
 cond.where(where,options=["and"])
@@ -120,7 +120,7 @@ from pytopconnect.condition import Condition, Where
 
 cond = Condition(MySQL_DB.database.table)
 where = {
-	"id":lambda col, **kwargs: Where(col, f"(({col}%2)==0) and ({col} > 10)")
+	"id":lambda col, **kwargs: Where(col, f"(({col.column}%2)==0) and ({col.column} > 10)")
 }
 cond.where(where)
 
