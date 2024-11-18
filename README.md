@@ -25,6 +25,8 @@ It includes modules:
 
 5. tqdm >= 4.60
 
+6. fuzzywuzzy >= 0.18
+
 ```bash
 pip install -U pytopconnect
 ```
@@ -37,7 +39,7 @@ import os
 from pytopconnect import QueryRead as QR
 
 DATA = {
-	"postgesql":[{"host":"localhost","port":3306,"user":"admin","password":"root","database":"","shema":""}],
+	"postgesql":[{"host":"localhost","port":5432,"user":"admin","password":"root","database":"","schema":""}],
 	"mysql":[{"host":"localhost","port":3306,"user":"admin","password":"root","database":""}],
 	"sqlite":[{"dbFile": "exempel.db"}]
 }
