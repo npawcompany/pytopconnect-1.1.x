@@ -32,7 +32,7 @@ pip install -U pytopconnect
 ```
 
 ## Documentation
-You can study the full documentation on [ptc.npaw.ru](https://ptc.npaw.ru "ptc.npaw.ru")
+You can study the full documentation on [pytopconnect.com](https://pytopconnect.com "pytopconnect.com")
 ### Module connection
 ```py
 import os
