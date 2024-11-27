@@ -358,7 +358,7 @@ class queryPY(pymysql.connections.Connection):
 		except BaseException as e:
 			raise e
 		return True
-	def show_table_f(self,q,r):def show_table_f(self, q, r):
+	def show_table_f(self, q, r):
 		"""
 		Retrieve a list of tables from the specified database.
 

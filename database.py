@@ -49,7 +49,22 @@ def __default_values__(key, args, n, t=False):
 		return list(range(1,n+1))
 	args = re.search(r'DEFAULT\((.*?)\)', str(args))
 	args = args if args is None else args.group(1)
-	args = None if args=="
+	args = None if args=="NULL" else args
+	if args is None:
+		return [None]*n
+	try:
+		return [dps.parse(args)]*n
+	except:
+		try:
+			return [json.loads(args)]*n
+		except:
+			if bool(re.match(r'^-?\d+(\.\d+)?$', args)):
+				return [float(args)]*n
+			elif args == 'CURRENT_TIMESTAMP':
+				return [datetime.now()]*n
+			elif args in ['TRUE','FALSE']:
+				return [True if args=='TRUE' else False]*n
+			return [args[1:-1]]*n
 
 def __default_to_value__(key, val):
 	"""
@@ -126,12 +141,18 @@ class DataBase:
 		if not isinstance(data, Series):
 			raise QueryException(f"Data types do not match")
 		self.names = []
+		self.data_bases = []
 		self.method = method
 		for name, tables in data.items():
 			self.names.append(name)
 			if not __check_variable_name__(f'tc_{name}'):
 				raise QueryException(f"The '{name}' data base name must follow the variable creation rules")
-			setattr(self, f'tc_{name}', Tables(method, name, tables))
+			data_bases = Tables(method,name,tables)
+			self.data_bases.append(data_bases)
+			setattr(self, f'tc_{name}', data_bases)
+	
+	def get(self,name:str,default=None):
+		return getattr(self,name,default)
 
 	def create_index(self, table):
 		"""
